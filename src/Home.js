@@ -7,6 +7,7 @@ import {
 } from "firebase/storage";
 
 import { database, storage } from "./firebase";
+import Posts from "./Posts";
 
 const POSTS_FOLDER_NAME = "posts";
 const IMAGES_FOLDER_NAME = "post-images";
@@ -16,6 +17,7 @@ const Home = () => {
   const [formData, setFormData] = useState({
     image: { value: "", file: undefined },
     caption: "",
+    url: "",
   });
 
   const handleChangeText = (e) => {
@@ -32,24 +34,28 @@ const Home = () => {
     }));
   };
 
+  // uploading to database
   const handleSubmit = async (e) => {
     e.preventDefault();
     const ts = new Date().toUTCString();
     const fileRef = refStorage(storage, `${IMAGES_FOLDER_NAME}/${ts}`);
-    console.log(fileRef);
-    console.log(formData.image.file);
+    // console.log(fileRef);
+    // console.log(formData.image.file);
     await uploadBytes(fileRef, formData.image.file);
     const imageDownloadUrl = await getDownloadURL(fileRef);
+    console.log(imageDownloadUrl);
     const postsListRef = refDatabase(database, POSTS_FOLDER_NAME);
-    console.log(postsListRef);
+    // console.log(postsListRef);
     const newPostsRef = push(postsListRef);
     set(newPostsRef, {
       caption: formData.caption,
       ts,
-      imageDownloadUrl,
+      url: imageDownloadUrl,
     });
+    console.log(posts);
   };
 
+  // downloading data back to website
   useEffect(() => {
     const messagesRef = refDatabase(database, POSTS_FOLDER_NAME);
     onChildAdded(messagesRef, (data) => {
@@ -57,10 +63,15 @@ const Home = () => {
         ...prev,
         {
           key: data.key,
-          val: { caption: data.val().caption, ts: data.val().ts },
+          val: {
+            caption: data.val().caption,
+            ts: data.val().ts,
+            url: data.val().url,
+          },
         },
       ]);
     });
+    console.log(posts);
   }, []);
 
   return (
@@ -88,14 +99,21 @@ const Home = () => {
           </div>
           <input type="submit" name="submit" />
         </form>
-        {posts &&
+        {
           // TODO: format posts
           posts.map((post) => {
-            return <div>{post.val.caption}</div>;
-          })}
+            // console.log(post.val.url);
+            <Posts
+              key={post.key}
+              imageUrl={post.val.url}
+              caption={post.val.caption}
+            />;
+
+            // return <div>{post.val.caption}</div>;
+          })
+        }
       </header>
     </div>
   );
 };
 export default Home;
-I;

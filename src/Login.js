@@ -7,7 +7,9 @@ import {
 
 const Login = (props) => {
   const [formData, setFormData] = useState({ email: "", password: "" });
-  //   const [userData, setUserData] = useState({ email: "", password: "" });
+
+  const [passwordStatus, setPasswordStatus] = useState(false);
+  const [signUpStatus, setSignUpStatus] = useState(true);
 
   const handleChangeText = (e) => {
     setFormData((prev) => ({
@@ -26,24 +28,26 @@ const Login = (props) => {
       })
       .catch((err) => {
         console.log(err.message);
-        if (err.message === "Firebase: Error (auth/user-not-found).") {
-          createUserWithEmailAndPassword(
-            auth,
-            formData.email,
-            formData.password
-          )
-            .then((userCredential) => {
-              console.log("signed up successful!");
-              props.setLogin();
-            })
-            .catch((err) => {
-              console.log(err);
-            });
+        if (err.message === "Firebase: Error (auth/wrong-password).") {
+          alert("Invalid Password");
+          setPasswordStatus(true);
         }
       });
     // if the user already exists on firebase, then check if password is right or wrong
 
     // if not exist, create a new login ID
+  };
+  const handleSignUp = (e) => {
+    createUserWithEmailAndPassword(auth, formData.email, formData.password)
+      .then((userCredential) => {
+        console.log("signed up successful!");
+        setSignUpStatus(true);
+        props.setLogin();
+        alert("Sign up successful");
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   return (
@@ -67,7 +71,11 @@ const Login = (props) => {
             onChange={handleChangeText}
           />
         </div>
-        <input type="submit" name="submit" />
+        <input disabled={!signUpStatus} type="submit" name="submit" />
+
+        <button disabled={!passwordStatus} type="button" onClick={handleSignUp}>
+          Sign Up
+        </button>
       </form>
     </div>
   );
